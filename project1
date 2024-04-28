@@ -1,0 +1,141 @@
+module LED_mid2
+(
+    input   wire i_rst_n,
+    input   wire i_clk,
+    input   wire i_btn_0,
+    input   wire i_btn_1,
+    input   wire i_btn_2,
+    
+    output wire [9:0]  o_led
+);
+reg [31:0]  r_main_cnt;
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_main_cnt<=0;
+    else
+    begin
+        if (r_main_cnt != 32'd99999999)
+            r_main_cnt<=r_main_cnt+1;
+        else
+            r_main_cnt<=0;
+    end
+end
+
+wire w_sec_det;
+assign w_sec_det=(r_main_cnt==32'd99999999);
+
+reg r_btn0_1, r_btn0_2;
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_btn0_1<=0;
+    else 
+        r_btn0_1<=i_btn_0;
+end
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_btn0_2<=0;
+    else
+        r_btn0_2<=r_btn0_1;
+end
+
+wire w_btn0_press;
+assign w_btn0_press= (r_btn0_1 && ~r_btn0_2);
+
+reg r_btn1_1, r_btn1_2;
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_btn1_1<=0;
+    else 
+        r_btn1_1<=i_btn_1;
+end
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_btn1_2<=0;
+    else
+        r_btn1_2<=r_btn1_1;
+end
+
+wire w_btn1_press;
+assign w_btn1_press= (r_btn1_1 && ~r_btn1_2);
+
+reg r_btn2_1, r_btn2_2;
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_btn2_1<=0;
+    else 
+        r_btn2_1<=i_btn_2;
+end
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_btn2_2<=0;
+    else
+        r_btn2_2<=r_btn2_1;
+end
+
+wire w_btn2_press;
+assign w_btn2_press= (r_btn2_1 && ~r_btn2_2);
+
+reg [2:0] r_mode;
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_mode<=0;
+    else
+    begin
+        if (w_btn1_press)
+            r_mode<=3'd1;
+        else
+        if (w_btn2_press)
+            r_mode<=3'd2;
+        else
+        if (w_btn0_press)
+            r_mode<=3'd0;
+    end
+end
+
+reg [9:0] r_led_state;
+always @(posedge i_clk or posedge i_rst_n)
+begin
+    if (i_rst_n)
+        r_led_state<=0;
+    else
+    begin
+        if (r_mode==0)
+        begin
+            if (w_sec_det)
+                r_led_state<=~r_led_state;
+        end
+        else
+        if (r_mode==1)
+        begin
+            if (w_sec_det)
+                r_led_state <= 10'b0101010101;
+            /*else
+                r_led_state<=0;*/
+        end
+        else
+        if (r_mode ==2)
+        begin
+            if (w_sec_det)
+                r_led_state <= 10'b1010101010;
+            /*else
+                r_led_state<=0;*/
+        end
+        else
+        begin
+            if (w_sec_det)
+                r_led_state<=~r_led_state;
+        end       
+  
+    end
+end
+
+assign o_led [9:0] = r_led_state;
+endmodule
